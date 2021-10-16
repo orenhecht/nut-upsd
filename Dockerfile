@@ -8,11 +8,15 @@ ENV UPS_NAME="ups"
 ENV UPS_DESC="UPS"
 ENV UPS_DRIVER="usbhid-ups"
 ENV UPS_PORT="auto"
+ENV UPS_POLL_INTERVAL="30"
+ENV UPS_SERIAL=""
+ENV UPS_VENDOR_ID=""
 
 ENV API_PASSWORD=""
 ENV ADMIN_PASSWORD=""
 
 ENV SHUTDOWN_CMD="echo 'System shutdown not configured!'"
+ENV ENABLE_WATCHDOG="true"
 
 RUN set -ex; \
 	# run dependencies

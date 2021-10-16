@@ -10,11 +10,27 @@ then
    ADMIN_PASSWORD=$(dd if=/dev/urandom bs=18 count=1 2>/dev/null | base64)
 fi
 
+if [ -z "$UPS_SERIAL" ]
+then
+   echo "Missing mandatory variable UPS_SERIAL, terminating..."
+   exit 1
+fi
+
+if [ -z "$UPS_VENDOR_ID" ]
+then
+   echo "Missing mandatory variable UPS_VENDOR_ID, terminating..."
+   exit 1
+fi
+
 cat >/etc/nut/ups.conf <<EOF
 [$UPS_NAME]
 	desc = "$UPS_DESC"
 	driver = $UPS_DRIVER
 	port = $UPS_PORT
+        pollinterval = $UPS_POLL_INTERVAL
+        serial = "$UPS_SERIAL"
+        vendorid = $UPS_VERNDOR_ID
+
 EOF
 
 cat >/etc/nut/upsd.conf <<EOF
@@ -41,6 +57,22 @@ EOF
 chgrp -R nut /etc/nut /dev/bus/usb
 chmod -R o-rwx /etc/nut
 
+ups_watchdog() {
+  while :
+  do
+    sleep 10
+    upsc $UPS_NAME > /dev/null 2>&1 || kill $(pgrep upsmon | tail -n 1)
+  done
+}
+
 /usr/sbin/upsdrvctl start
 /usr/sbin/upsd
+
+if [ "$ENABLE_WATCHDOG" = true ] ; then
+  echo "Watchdog is enabled!"
+  set +x
+  ups_watchdog &
+  set -x
+fi
+
 exec /usr/sbin/upsmon -D
